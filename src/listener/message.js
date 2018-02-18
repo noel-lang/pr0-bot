@@ -1,19 +1,9 @@
-const Discord		= require("discord.js");
+const Discord 		= require("discord.js");
 const url 			= require("url");
 const axios 		= require("axios");
 const validator 	= require("validator");
-const dotenv		= require("dotenv");
 
-const client 		= new Discord.Client();
-dotenv.config();
-
-// Wenn der Bot sich erfolgreich eingeloggt hat.
-client.on("ready", () => {
-	console.log(`Eingeloggt als: ${client.user.tag}`);
-});
-
-// Wenn der Bot eine neue Nachricht registriert.
-client.on("message", async (msg) => {
+module.exports = async (msg) => {
 	let content = msg.content;
 	let isUrl = validator.isURL(content);
 
@@ -30,11 +20,11 @@ client.on("message", async (msg) => {
 		let pr0Id = urlPathname.split("/")[2];
 		
 		// Infos von der API fetchen.
-		const itemsResult = await axios.get(`https://pr0gramm.com/api/items/get?id=${pr0Id}`);
+		const itemsResult = await axios.get(`https://pr0gramm.com/api/items/get?id=${pr0Id}&flags=7`);
 		const desiredItem = itemsResult.data.items[0];
 
 		// Tags von dem jeweiligen Post fetchen.
-		const itemTags = await axios.get(`https://pr0gramm.com/api/items/info?itemId=${pr0Id}`);
+		const itemTags = await axios.get(`https://pr0gramm.com/api/items/info?itemId=${pr0Id}&flags=7`);
 		const desiredItemTags = itemTags.data.tags;
 
 		// Das kann man bestimmt irgendwie verbessern.
@@ -69,12 +59,31 @@ client.on("message", async (msg) => {
 		description += `[pr0 Link](${content}) \n\n`;
 		description += `**Tags:** \n${tags.join(", ")}`;
 
+		/*
+			// all: Vorschau wird überall angezeigt.
+			// nsfw: Vorschau wird nur in nsfw Channels angezeigt.
+			// none: Vorschau wird nirgends angezeigt.
+			{
+				showNsfl: [all, nsfw, none],
+				showNsfw, [all, nsfw, none]
+			}
+		*/
+
+		// Flag check.
+		if(desiredItem.flags === 2 && msg.channel.nsfw === false) {
+			// NSFW
+			embed.setImage(null);
+			description += `\n \n \n \n**Bild wurde aufgrund von NSFW entfernt. In den Einstellungen könnt ihr das ändern. (Oder den Channel NSFW machen)**`;
+		} else if(desiredItem.flags === 4) {
+			// NSFL
+			embed.setImage(null);
+			description += `\n \n \n \n**Bild wurde aufgrund von NSFL entfernt. In den Einstellungen könnt ihr das ändern.**`;
+		}
+
 		// Description und Formatierung hinzufügen, anschließend
 		// die Nachricht mit dem RichEmbed abschicken.
 		embed.setDescription(description);
 		embed.addBlankField(true);
 		msg.channel.send({ embed });
 	}
-});
-
-client.login(process.env.DISCORD_TOKEN);
+};
