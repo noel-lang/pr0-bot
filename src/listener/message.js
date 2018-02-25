@@ -28,9 +28,7 @@ module.exports = async (msg) => {
 		const desiredItemTags = itemTags.data.tags;
 
 		// Das kann man bestimmt irgendwie verbessern.
-		let sortedTags = desiredItemTags.sort((a, b) => a.confidence < b.confidence);
-		let tags = [];
-		sortedTags.forEach(tag => tags.push(tag.tag));
+		let tags = desiredItemTags.sort((a, b) => a.confidence < b.confidence).map(t => t.tag);
 
 		// Wir wollen später zwischen Video und Bild unterscheiden.
 		let isVideo = desiredItem.image.indexOf(".mp4") !== -1;
